@@ -1,12 +1,14 @@
 /**
  * In-memory order store shared across Route Handler invocations.
  * In production replace with Redis / Supabase / Postgres.
- * Module-level singleton persists for the lifetime of the Next.js process.
+ *
+ * Uses globalThis to guarantee a single instance across all Next.js
+ * module contexts (Turbopack creates separate contexts per route handler).
  */
 
 import type { CartItem } from '@/app/types';
 
-export type OrderStatus = 'new' | 'preparing' | 'ready' | 'delivered';
+export type OrderStatus = 'new' | 'preparing' | 'ready' | 'delivered' | 'billed' | 'paid';
 
 export interface Order {
   id: string;
@@ -23,23 +25,34 @@ type SSEClient = {
   controller: ReadableStreamDefaultController<Uint8Array>;
 };
 
-// Module-level singletons
-const orders = new Map<string, Order>();
-const clients = new Set<SSEClient>();
+// Attach to globalThis so all route handler module contexts share one instance
+type Store = {
+  orders: Map<string, Order>;
+  clients: Set<SSEClient>;
+  counter: number;
+};
 
-let counter = 1;
+const g = globalThis as typeof globalThis & { __cafeStore?: Store };
+if (!g.__cafeStore) {
+  g.__cafeStore = {
+    orders: new Map<string, Order>(),
+    clients: new Set<SSEClient>(),
+    counter: 1,
+  };
+}
+const store = g.__cafeStore;
 
 export function createOrder(tableNumber: number, items: CartItem[], totalPrice: number): Order {
-  const id = `ORD-${String(counter++).padStart(4, '0')}`;
+  const id = `ORD-${String(store.counter++).padStart(4, '0')}`;
   const now = new Date().toISOString();
   const order: Order = { id, tableNumber, items, totalPrice, status: 'new', createdAt: now, updatedAt: now };
-  orders.set(id, order);
+  store.orders.set(id, order);
   broadcast({ type: 'order_created', order });
   return order;
 }
 
 export function updateOrderStatus(id: string, status: OrderStatus): Order | null {
-  const order = orders.get(id);
+  const order = store.orders.get(id);
   if (!order) return null;
   order.status = status;
   order.updatedAt = new Date().toISOString();
@@ -47,8 +60,30 @@ export function updateOrderStatus(id: string, status: OrderStatus): Order | null
   return order;
 }
 
+export function getOrdersByTable(table: number): Order[] {
+  return [...store.orders.values()].filter(o => o.tableNumber === table);
+}
+
+export function deliverTable(table: number): Order[] {
+  return getOrdersByTable(table)
+    .filter(o => o.status === 'ready')
+    .map(o => updateOrderStatus(o.id, 'delivered')!);
+}
+
+export function billTable(table: number): Order[] {
+  return getOrdersByTable(table)
+    .filter(o => o.status === 'delivered')
+    .map(o => updateOrderStatus(o.id, 'billed')!);
+}
+
+export function payTable(table: number): Order[] {
+  return getOrdersByTable(table)
+    .filter(o => o.status === 'billed')
+    .map(o => updateOrderStatus(o.id, 'paid')!);
+}
+
 export function getAllOrders(): Order[] {
-  return [...orders.values()].sort(
+  return [...store.orders.values()].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
@@ -57,20 +92,20 @@ export function getAllOrders(): Order[] {
 const encoder = new TextEncoder();
 
 export function addSSEClient(client: SSEClient) {
-  clients.add(client);
+  store.clients.add(client);
 }
 
 export function removeSSEClient(client: SSEClient) {
-  clients.delete(client);
+  store.clients.delete(client);
 }
 
 function broadcast(payload: unknown) {
   const msg = encoder.encode(`data: ${JSON.stringify(payload)}\n\n`);
-  for (const client of clients) {
+  for (const client of store.clients) {
     try {
       client.controller.enqueue(msg);
     } catch {
-      clients.delete(client);
+      store.clients.delete(client);
     }
   }
 }

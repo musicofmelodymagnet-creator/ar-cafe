@@ -4,7 +4,7 @@ import type { OrderStatus } from '@/app/lib/order-store';
 
 export const dynamic = 'force-dynamic';
 
-const VALID_STATUSES: OrderStatus[] = ['new', 'preparing', 'ready', 'delivered'];
+const VALID_STATUSES: OrderStatus[] = ['new', 'preparing', 'ready', 'delivered', 'billed', 'paid'];
 
 export async function PATCH(
   req: NextRequest,

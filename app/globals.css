@@ -36,6 +36,16 @@
     /* Success */
     --success:        oklch(68%   0.160 145);
     --success-subtle: oklch(95%   0.040 145);
+
+    /* Waiter status — preparing (orange) */
+    --status-preparing-bg:     oklch(94%  0.035 45);
+    --status-preparing-border: oklch(72%  0.160 45);
+    --status-preparing-fg:     oklch(30%  0.060 45);
+
+    /* Waiter status — billed (blue) */
+    --status-billed-bg:        oklch(94%  0.025 250);
+    --status-billed-border:    oklch(65%  0.120 250);
+    --status-billed-fg:        oklch(28%  0.070 250);
   }
 
   .dark {
@@ -64,6 +74,14 @@
 
     --success:        oklch(68%   0.160 145);
     --success-subtle: oklch(20%   0.060 145);
+
+    --status-preparing-bg:     oklch(22%  0.040 45);
+    --status-preparing-border: oklch(65%  0.130 45);
+    --status-preparing-fg:     oklch(82%  0.060 45);
+
+    --status-billed-bg:        oklch(20%  0.030 250);
+    --status-billed-border:    oklch(55%  0.100 250);
+    --status-billed-fg:        oklch(78%  0.060 250);
   }
 }
 
@@ -84,6 +102,12 @@
   --color-accent-fg:      var(--accent-fg);
   --color-success:        var(--success);
   --color-success-subtle: var(--success-subtle);
+  --color-status-preparing-bg:     var(--status-preparing-bg);
+  --color-status-preparing-border: var(--status-preparing-border);
+  --color-status-preparing-fg:     var(--status-preparing-fg);
+  --color-status-billed-bg:        var(--status-billed-bg);
+  --color-status-billed-border:    var(--status-billed-border);
+  --color-status-billed-fg:        var(--status-billed-fg);
   --font-sans: var(--font-geist);
 }
 
@@ -102,6 +126,13 @@
   /* Smooth theme transitions (not on first paint — class added via JS) */
   html.theme-ready * {
     transition: background-color 200ms ease, border-color 200ms ease, color 150ms ease;
+  }
+}
+
+/* ── Touch interaction — eliminate 300ms tap delay on all interactive elements */
+@layer base {
+  button, a, [role="button"], input, select, label {
+    touch-action: manipulation;
   }
 }
 

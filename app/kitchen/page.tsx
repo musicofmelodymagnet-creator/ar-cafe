@@ -8,6 +8,8 @@ const STATUS_META: Record<OrderStatus, { label: string; color: string; next: Ord
   preparing: { label: 'Готовится',  color: 'bg-amber-400',  next: 'ready'     },
   ready:     { label: 'Готово',     color: 'bg-green-500',  next: 'delivered' },
   delivered: { label: 'Выдан',      color: 'bg-zinc-400',   next: null        },
+  billed:    { label: 'В счёте',    color: 'bg-zinc-400',   next: null        },
+  paid:      { label: 'Оплачен',    color: 'bg-zinc-300',   next: null        },
 };
 
 const CATEGORY_EMOJI: Record<string, string> = {

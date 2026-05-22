@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AR Кафе
 
-## Getting Started
+Полноценное WebAR-приложение для ресторана. Гость сканирует QR-код на столе, просматривает меню, видит блюда в 3D прямо на своём столике через камеру телефона и делает заказ. Официант принимает заказы и выставляет счёт. Кухня видит все заказы в режиме реального времени.
 
-First, run the development server:
+## Страницы
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| URL | Кто использует | Описание |
+|-----|---------------|----------|
+| `/menu?table=N` | Гость | AR-меню, корзина, 3D-просмотр блюд |
+| `/waiter` | Официант | Сетка столов, ручной приём заказов, выставление счёта |
+| `/kitchen` | Кухня | Kitchen Display System, управление статусами блюд |
+
+## Функциональность
+
+### Меню гостя `/menu`
+
+- Категории блюд: Закуски, Горячее, Десерты, Напитки
+- Карточки блюд с ценой, калорийностью и картой происхождения ингредиентов
+- Просмотр блюда в AR через `@google/model-viewer` (WebXR, Scene Viewer на Android, AR Quick Look на iOS)
+- Корзина с добавлением/удалением позиций
+- Отправка заказа на кухню одной кнопкой
+- Тёмная и светлая тема (сохраняется в `localStorage`, учитывает `prefers-color-scheme`)
+- Номер стола передаётся через `?table=N` — генерируется QR-кодом на каждом столике
+
+### Интерфейс официанта `/waiter`
+
+- Сетка 12 столов с цветовыми статусами в реальном времени:
+  - **Серый** — свободен
+  - **Янтарный** — новый заказ от гостя
+  - **Оранжевый** — кухня готовит
+  - **Зелёный** — блюда готовы к подаче
+  - **Нейтральный** — блюда поданы, ждём счёт
+  - **Синий** — счёт выставлен, ждём оплату
+- Детальный вид стола: все заказы, позиции, статусы, время
+- Контекстные кнопки действий:
+  - **Блюда поданы на стол** — когда кухня выдала готовые блюда
+  - **Выставить счёт** — агрегированный чек всех блюд стола
+  - **Принято оплатой** — закрывает стол, стол становится свободным
+- **Ручной приём заказа** — официант выбирает блюда вручную (для гостей без телефона), заказ сразу идёт на кухню
+
+### Кухонный экран `/kitchen`
+
+- Три колонки: Новые → Готовится → Готово
+- Обновления в реальном времени через Server-Sent Events (SSE)
+- Таймер каждого заказа
+- Кнопки перехода по статусам: Начать готовить → Готово
+
+## Жизненный цикл заказа
+
+```
+new → preparing → ready → delivered → billed → paid
+       кухня       кухня   официант    официант  официант
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Стек технологий
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Next.js 16** (App Router, Server Components, Route Handlers)
+- **TypeScript** — строгая типизация, без `any`
+- **Tailwind CSS v4** — OKLCH цветовые токены, `@variant dark`, `@theme inline`
+- **@google/model-viewer** — WebXR / Scene Viewer / AR Quick Look
+- **Server-Sent Events** — реалтайм обновления без WebSocket
+- **Vitest + jsdom** — юнит и интеграционные тесты
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Быстрый старт
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Приложение запускается на `http://localhost:3000`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Для доступа с мобильного телефона в локальной сети добавьте IP адрес телефона в `next.config.ts`:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```ts
+allowedDevOrigins: ['192.168.x.x'],
+```
 
-## Deploy on Vercel
+## Команды
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev      # запуск сервера разработки
+npm run build    # сборка продакшн-версии
+npm run test     # юнит-тесты (Vitest)
+npm run lint     # проверка линтером
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Структура проекта
+
+```
+app/
+  menu/page.tsx          # Меню гостя (Server Component)
+  waiter/page.tsx        # Интерфейс официанта
+  kitchen/page.tsx       # Кухонный экран (KDS)
+  api/
+    orders/              # POST создать, GET список
+    orders/[id]/         # PATCH обновить статус
+    orders/stream/       # GET Server-Sent Events поток
+    tables/              # GET агрегированные данные столов
+    tables/[n]/          # POST действия: deliver | bill | pay
+  context/
+    CartContext.tsx       # Корзина гостя (useReducer)
+    ThemeContext.tsx      # Тёмная/светлая тема
+  data/menu.ts           # 10 блюд с координатами ингредиентов
+  lib/order-store.ts     # In-memory хранилище заказов + SSE broadcast
+  types/index.ts         # TypeScript типы
+
+components/
+  menu/
+    MenuCard.tsx         # Карточка блюда с AR-кнопкой
+    CategoryTabs.tsx     # Вкладки категорий
+    CartDrawer.tsx       # Корзина (bottom sheet)
+    ThemeToggle.tsx      # Переключатель темы
+  waiter/
+    WaiterClient.tsx     # Главный компонент официанта
+    ManualOrderSheet.tsx # Ручной ввод заказа (bottom sheet)
+    BillSheet.tsx        # Счёт / расчёт (bottom sheet)
+  ar/
+    ARFoodViewer.tsx     # model-viewer обёртка
+
+public/models/           # .glb и .usdz модели блюд
+tests/                   # Vitest тесты
+```
+
+## 3D-модели
+
+Placeholder-модели генерируются скриптом:
+
+```bash
+node scripts/generate-models.mjs
+```
+
+Создаёт `.glb` (glTF 2.0 binary) и `.usdz` (для iOS AR Quick Look) для всех 10 блюд. Для продакшна замените на реальные модели.
