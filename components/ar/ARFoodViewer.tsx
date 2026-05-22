@@ -118,7 +118,7 @@ export default function ARFoodViewer({ item, onClose, tableNumber, onAddToCart }
           alt={item.name}
           ar
           ar-modes="webxr scene-viewer quick-look"
-          ar-scale="fixed"
+          ar-scale="auto"
           camera-controls
           touch-action="pan-y"
           shadow-intensity="1.5"
