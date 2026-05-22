@@ -132,6 +132,56 @@ export const MENU_ITEMS: MenuItem[] = [
     usdzSrc: '/models/creme-brulee.usdz',
     imageSrc: '/images/creme-brulee.jpg',
   },
+  // REAL 3D MODELS
+  {
+    id: 'real-1',
+    name: 'Классический бургер',
+    category: 'mains',
+    description: 'Сочная котлета из говядины ручной формовки, выдержанный чеддер, карамелизованный лук и фирменный соус на поджаренной бриоши.',
+    price: 690,
+    calories: 720,
+    ingredients: [
+      { ingredient: 'Говядина', origin: 'Воронежская область', lat: 51.66, lng: 39.19 },
+      { ingredient: 'Сыр чеддер', origin: 'Беларусь', lat: 53.90, lng: 27.56 },
+      { ingredient: 'Бриошь', origin: 'Нормандия, Франция', lat: 49.18, lng: 0.35 },
+    ],
+    glbSrc: '/models/burger.glb',
+    usdzSrc: '/models/burger.usdz',
+    imageSrc: '/images/burger.jpg',
+  },
+  {
+    id: 'real-2',
+    name: 'Шоколадный капкейк',
+    category: 'desserts',
+    description: 'Пышный шоколадный капкейк с бельгийским ганашем, украшенный домашними маршмэллоу и шоколадной крошкой.',
+    price: 380,
+    calories: 420,
+    ingredients: [
+      { ingredient: 'Шоколад 70%', origin: 'Бельгия', lat: 50.85, lng: 4.35 },
+      { ingredient: 'Маршмэллоу', origin: 'Домашнего приготовления', lat: 55.75, lng: 37.61 },
+      { ingredient: 'Сливочное масло', origin: 'Вологодская область', lat: 59.22, lng: 39.89 },
+    ],
+    glbSrc: '/models/chocolate-cupcake.glb',
+    usdzSrc: '/models/chocolate-cupcake.usdz',
+    imageSrc: '/images/chocolate-cupcake.jpg',
+  },
+  {
+    id: 'real-3',
+    name: 'Торт «Акварель»',
+    category: 'desserts',
+    description: 'Многослойный торт с кремом из маскарпоне и малиновым кули. Каждый кусочек расписан вручную пищевыми красителями.',
+    price: 520,
+    calories: 460,
+    ingredients: [
+      { ingredient: 'Маскарпоне', origin: 'Ломбардия, Италия', lat: 45.46, lng: 9.18 },
+      { ingredient: 'Малина', origin: 'Краснодарский край', lat: 45.03, lng: 38.97 },
+      { ingredient: 'Ваниль', origin: 'Мадагаскар', lat: -18.76, lng: 46.86 },
+    ],
+    glbSrc: '/models/watercolor-cake.glb',
+    usdzSrc: '/models/watercolor-cake.usdz',
+    imageSrc: '/images/watercolor-cake.jpg',
+  },
+
   // DRINKS
   {
     id: 'drk-1',
