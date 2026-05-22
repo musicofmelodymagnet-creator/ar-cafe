@@ -10,17 +10,34 @@ export default function CartDrawer() {
   const [isOrdering, setIsOrdering] = useState(false);
   const [ordered, setOrdered] = useState(false);
 
+  const [orderError, setOrderError] = useState<string | null>(null);
+
   const handleOrder = async () => {
+    if (!state.tableNumber) return;
     setIsOrdering(true);
-    // Simulate API call to kitchen
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsOrdering(false);
-    setOrdered(true);
-    clearCart();
-    setTimeout(() => {
-      setOrdered(false);
-      setIsOpen(false);
-    }, 2500);
+    setOrderError(null);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tableNumber: state.tableNumber,
+          items: cartItems,
+          totalPrice,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setOrdered(true);
+      clearCart();
+      setTimeout(() => {
+        setOrdered(false);
+        setIsOpen(false);
+      }, 2500);
+    } catch {
+      setOrderError('Не удалось отправить заказ. Попробуйте ещё раз.');
+    } finally {
+      setIsOrdering(false);
+    }
   };
 
   if (totalItems === 0 && !isOpen) {
@@ -161,9 +178,12 @@ export default function CartDrawer() {
               <span className="text-zinc-500 text-sm">Итого</span>
               <span className="font-bold text-xl text-zinc-900">{totalPrice.toLocaleString('ru-RU')} ₽</span>
             </div>
+            {orderError && (
+              <p className="text-red-500 text-xs text-center mb-3">{orderError}</p>
+            )}
             <button
               onClick={handleOrder}
-              disabled={isOrdering}
+              disabled={isOrdering || !state.tableNumber}
               className="w-full bg-amber-400 hover:bg-amber-300 disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.98] text-black font-bold px-6 py-4 rounded-2xl transition-all duration-150 text-base flex items-center justify-center gap-2"
             >
               {isOrdering ? (
